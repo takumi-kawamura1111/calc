@@ -1,0 +1,174 @@
+<head>
+    <meta charset="UTF-8">
+    <title>テクニカルスコア計算機</title>
+    <!-- 端まで広げる＆ノッチ対応 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        :root {
+            --pad: 16px;
+        }
+
+        /* 余白ゼロ＋安全域に配慮して全高 */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto;
+            background: #f6f7f9;
+            min-height: 100svh;
+            /* iOSのURLバー縮小後の高さに追従 */
+            padding:
+                calc(env(safe-area-inset-top) + var(--pad)) calc(env(safe-area-inset-right) + var(--pad)) calc(env(safe-area-inset-bottom)+ var(--pad)) calc(env(safe-area-inset-left) + var(--pad));
+            display: grid;
+            place-items: stretch;
+        }
+
+        /* 端から端まで。カード風をやめて“面”で使う */
+        .card {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            margin: 0;
+            background: #fff;
+            padding: 20px 16px 24px;
+            border-radius: 0;
+            box-shadow: none;
+            display: grid;
+            grid-template-rows: auto auto auto auto 1fr auto;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0 0 6px;
+        }
+
+        label {
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+        }
+
+        /* 数字キーボードにしたい場合はtype=numberでもOK */
+        input[type="number"] {
+            -webkit-appearance: none;
+            appearance: textfield;
+        }
+
+        .inline {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .inline label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            border: 0;
+            border-radius: 12px;
+            background: #2563eb;
+            color: #fff;
+            margin-top: 6px;
+        }
+
+        .result {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>テクニカルスコア計算機（オフライン）</h1>
+
+        <label>譜面定数（例：14.8）</label>
+        <input id="musical" type="text" placeholder="例: 14.8">
+
+        <label>スコア（例：1005500）</label>
+        <input id="score" type="text" placeholder="例: 1005500">
+
+        <label>ランプボーナス</label>
+        <div class="inline">
+            <label><input type="checkbox" id="fb"> FB</label>
+            <label><input type="checkbox" id="ab"> AB</label>
+            <label><input type="checkbox" id="fc"> FC</label>
+        </div>
+
+        <button id="calc">計算</button>
+        <div class="result" id="out">単曲レーティング：—</div>
+    </div>
+
+    <script>
+        function floor3(x) { return (Math.floor(x * 1000) / 1000).toFixed(3); }
+
+        function calc(base, score) {
+            let result_value = base;
+            const s = score;
+
+            if (970000 <= s && s < 990000) {
+                const bonus = ((s - 970000) / 26.6) * 0.001;
+                result_value = base + bonus;
+            } else if (s === 990000) {
+                result_value = base + 0.750 + 0.100;
+            } else if (990000 < s && s < 1000000) {
+                const bonus = ((s - 990000) / 20) * 0.001;
+                result_value = base + bonus + 0.100 + 0.750;
+            } else if (s === 1000000) {
+                result_value = base + 1.250 + 0.200;
+            } else if (1000000 < s && s < 1007500) {
+                const bonus = ((s - 1000000) / 15) * 0.001;
+                result_value = base + bonus + 0.200 + 1.250;
+            } else if (s === 1007500) {
+                result_value = base + 1.750 + 0.300;
+            } else if (1007500 < s && s < 1010000) {
+                const bonus = ((s - 1007500) / 10) * 0.001;
+                result_value = base + bonus + 0.300 + 1.750;
+            } else if (s === 1010000) {
+                result_value = base + 2.000 + 0.350;
+            } else {
+                result_value = base;
+            }
+            return result_value;
+        }
+
+        document.getElementById('calc').addEventListener('click', () => {
+            try {
+                const base = parseFloat(document.getElementById('musical').value);
+                const score = parseInt(document.getElementById('score').value, 10);
+                if (isNaN(base) || isNaN(score)) throw new Error();
+
+                let val = calc(base, score);
+                if (document.getElementById('fb').checked) val += 0.050;
+                if (document.getElementById('ab').checked) val += 0.300;
+                if (document.getElementById('fc').checked) val += 0.100;
+
+                document.getElementById('out').textContent = '単曲レーティング：' + floor3(val);
+            } catch (e) {
+                document.getElementById('out').textContent = '単曲レーティング：エラー';
+            }
+        });
+    </script>
+</body>
+
+</html>
